@@ -1,0 +1,38 @@
+name: Vacancy Bot
+
+on:
+  schedule:
+    - cron: '0 */6 * * *'   # каждые 6 часов
+  workflow_dispatch:          # кнопка ручного запуска
+
+jobs:
+  run-bot:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install requests
+
+      - name: Restore sent vacancies
+        uses: actions/cache/restore@v4
+        with:
+          path: sent_vacancies.json
+          key: sent-vacancies-${{ github.run_id }}
+          restore-keys: sent-vacancies-
+
+      - name: Run bot
+        env:
+          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+        run: python bot.py
+
+      - name: Save sent vacancies
+        uses: actions/cache/save@v4
+        if: always()
+        with:
+          path: sent_vacancies.json
+          key: sent-vacancies-${{ github.run_id }}
